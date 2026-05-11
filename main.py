@@ -535,7 +535,9 @@ def deterministic_password_hash(login):
     return hashlib.sha256(f"demo-password-for-{login}".encode("utf-8")).hexdigest()
 
 def passport_no(index):
-    return f"45{index % 100:02d} {100000 + index % 900000}"
+    series = 4500 + index // 900000
+    number = 100000 + index % 900000
+    return f"{series:04d} {number:06d}"
 
 def bakery_name(index):
     district = DISTRICTS[(index - 1) % len(DISTRICTS)]
