@@ -46,11 +46,12 @@ CREATE TABLE work_schedule (
     employee_id bigint NOT NULL,
     bakery_id bigint NOT NULL,
     work_date date NOT NULL,
+    day_of_week smallint NOT NULL,
     work_start_time time NOT NULL,
     work_end_time time NOT NULL,
     break_start_time time,
     break_end_time time,
-    CONSTRAINT uq_schedule_employee_date UNIQUE (employee_id, work_date),
+    CONSTRAINT chk_schedule_day_of_week CHECK (day_of_week BETWEEN 1 AND 7),
     CONSTRAINT chk_schedule_work_time CHECK (work_end_time > work_start_time),
     CONSTRAINT chk_schedule_break_time CHECK (
         (break_start_time IS NULL AND break_end_time IS NULL)
