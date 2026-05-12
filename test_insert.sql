@@ -97,15 +97,15 @@ INSERT INTO employee (
 );
 
 INSERT INTO work_schedule (
-    employee_id, bakery_id, work_date,
+    employee_id, bakery_id, work_date, day_of_week,
     work_start_time, work_end_time,
     break_start_time, break_end_time
 ) VALUES
-(1, 1, CURRENT_DATE, '10:00', '18:00', '13:00', '14:00'),
-(2, 1, CURRENT_DATE, '07:00', '15:00', '11:00', '11:30'),
-(3, 1, CURRENT_DATE, '08:00', '16:00', '12:00', '12:30'),
-(4, 1, CURRENT_DATE, '09:00', '18:00', '13:30', '14:00'),
-(5, 1, CURRENT_DATE, '10:00', '19:00', '14:00', '14:30');
+(1, 1, CURRENT_DATE, EXTRACT(ISODOW FROM CURRENT_DATE)::smallint, '10:00', '18:00', '13:00', '14:00'),
+(2, 1, CURRENT_DATE, EXTRACT(ISODOW FROM CURRENT_DATE)::smallint, '07:00', '15:00', '11:00', '11:30'),
+(3, 1, CURRENT_DATE, EXTRACT(ISODOW FROM CURRENT_DATE)::smallint, '08:00', '16:00', '12:00', '12:30'),
+(4, 1, CURRENT_DATE, EXTRACT(ISODOW FROM CURRENT_DATE)::smallint, '09:00', '18:00', '13:30', '14:00'),
+(5, 1, CURRENT_DATE, EXTRACT(ISODOW FROM CURRENT_DATE)::smallint, '10:00', '19:00', '14:00', '14:30');
 
 INSERT INTO ingredient (
     ingredient_id, name, description, cost_per_kg, cost_per_piece,
