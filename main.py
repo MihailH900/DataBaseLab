@@ -856,6 +856,7 @@ def create_schedule_for_bakery(cur, bakery_id, employees_by_role, config):
                     employee_id,
                     bakery_id,
                     work_date,
+                    work_date.isoweekday(),
                     work_start,
                     work_end,
                     break_start,
@@ -865,7 +866,7 @@ def create_schedule_for_bakery(cur, bakery_id, employees_by_role, config):
         cur,
         """
         INSERT INTO work_schedule (
-            employee_id, bakery_id, work_date,
+            employee_id, bakery_id, work_date, day_of_week,
             work_start_time, work_end_time,
             break_start_time, break_end_time
         ) VALUES %s
