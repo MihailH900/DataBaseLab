@@ -24,6 +24,8 @@ class ScenarioConfig:
     max_items_per_order: int
     delivery_share: float
     commit_every: int
+    open_order_share: float = 0.0
+    stock_multiplier: int = 1
 
 
 SCENARIOS = {
@@ -68,6 +70,22 @@ SCENARIOS = {
         max_items_per_order=3,
         delivery_share=0.40,
         commit_every=50,
+    ),
+"index_demo": ScenarioConfig(
+    name="index_demo",
+    bakery_count=100,
+    clients_per_bakery=200,
+    confectioners_per_bakery=2,
+    cashiers_per_bakery=2,
+    couriers_per_bakery=2,
+    products_per_bakery=7,
+    orders_per_bakery=5000,
+    schedule_days=7,
+    max_items_per_order=5,
+    delivery_share=0.15,
+    commit_every=5,
+    open_order_share=0.98,
+    stock_multiplier=300,
     ),
 }
 
@@ -875,16 +893,23 @@ def create_schedule_for_bakery(cur, bakery_id, employees_by_role, config):
         page_size=1000,
     )
 
-def create_stocks_for_bakery(cur, bakery_id, bakery_index, ref, rng):
+def create_stocks_for_bakery(cur, bakery_id, bakery_index, ref, config, rng):
     ingredient_rows = []
+    stock_multiplier = Decimal(str(config.stock_multiplier))
     for ingredient in INGREDIENTS:
         factor = Decimal(str(1 + (bakery_index % 5) * 0.15))
         stock_g = Decimal("0")
         if ingredient["can_be_weight"]:
-            stock_g = (Decimal("5000") + Decimal(str(rng.randint(0, 7000)))) * factor
+            stock_g = (
+                Decimal("5000") + Decimal(str(rng.randint(0, 7000)))
+            ) * factor * stock_multiplier
         stock_pcs = 0
         if ingredient["can_be_piece"]:
-            stock_pcs = int((40 + rng.randint(0, 80)) * float(factor))
+            stock_pcs = int(
+                (40 + rng.randint(0, 80))
+                * float(factor)
+                * config.stock_multiplier
+            )
         daily_g = Decimal("0")
         if ingredient["can_be_weight"]:
             daily_g = money(Decimal("150") + Decimal(str(rng.randint(0, 120))))
@@ -1172,6 +1197,14 @@ def create_orders_for_bakery(cur, bakery_id, bakery_index, client_ids, employees
         cashier_id = rng.choice(cashiers)
 
         initial_status = ORDER_STATUSES["pickup"] if model["order_type"] != "DELIVERY" else ORDER_STATUSES["delivery_ok"]
+        order_status = initial_status
+        if rng.random() < config.open_order_share:
+            order_status = rng.choice([
+                "CREATED",
+                "PAID",
+                "IN_PROGRESS",
+                "CANCELLED",
+            ])
         cur.execute(
             """
             INSERT INTO customer_order (
@@ -1186,7 +1219,7 @@ def create_orders_for_bakery(cur, bakery_id, bakery_index, client_ids, employees
                 cashier_id,
                 order_dt,
                 model["order_type"],
-                initial_status,
+                order_status,
                 model["total_amount"],
             ),
         )
@@ -1347,7 +1380,7 @@ def populate_database(conn, config, seed, reset):
             client_ids = create_clients_for_bakery(cur, idx, config, rng)
             employees_by_role = create_employees_for_bakery(cur, bakery_id, idx, config, rng)
             create_schedule_for_bakery(cur, bakery_id, employees_by_role, config)
-            create_stocks_for_bakery(cur, bakery_id, idx, ref, rng)
+            create_stocks_for_bakery(cur, bakery_id, idx, ref, config, rng)
             catalog = create_products_and_pricelist(
                 cur,
                 bakery_id,
@@ -1381,7 +1414,7 @@ def parse_args():
         "--scenario",
         choices=sorted(SCENARIOS.keys()),
         default="small",
-        help="Сценарий заполнения: small, medium, large",
+        help=f"Сценарий заполнения: {', '.join(sorted(SCENARIOS.keys()))}",
     )
     parser.add_argument(
         "--dsn",
